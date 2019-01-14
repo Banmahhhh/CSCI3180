@@ -1,0 +1,12 @@
+Daily Attendance Summary
+Date: January 4, 2019
+Staff-ID Name                            Department Status
+--------------------------------------------------------------
+1009     CHAN       TAI MAN              ITD        LATE
+1077     WONG       ALICE                ITD        PRESENT
+1823     WONG       SIU MING             HRD        SUSPICIOUS
+--------------------------------------------------------------
+Number of Presences:    1
+Number of Absences:    0
+Number of Late Arrivals:    1
+Number of Suspicious Records:    1
