@@ -219,6 +219,8 @@
       * add CRLF at the end of lines
             01 cr pic x value X"0D".
 
+            01 current-date pic xx.
+
        procedure division.
             main-para.
       * read employee date, and write them into tempfile
@@ -234,6 +236,8 @@
             open input att.
             open i-o tempfile
             read att into ws-date.
+            move att-day to current-date.
+            display 'current date is ' current-date
             perform read-att-para.
             close tempfile
             close att.
@@ -246,7 +250,7 @@
             read mon into ws-mon-date
             move ws-mon-date to date1-line
             move cr to mon-cr1
-            display 'mon-date1 ' mon-date1
+            *> display 'mon-date1 ' mon-date1
             write mon-date1
             end-write
             perform edit-mon-para
@@ -259,16 +263,13 @@
             open output summ
       * write the first line     Daily Attendance Summary
             move 'Daily Attendance Summary' to first-line.
-            display 'fline ' fline
             move cr to f-cr
             write fline
             end-write
-            *> display 'finish the first line'
       * write the second line        Date: January 4, 2019
             open input att
             perform write-date-sum
             close att
-            *> display 'finish the second line'
       * write the third line
             move
         'Staff-ID Name                            Department Status' to
@@ -276,7 +277,6 @@
             move cr to t-cr
             write tline
             end-write
-            *> display 'finish the third line'
       * write the forth line, which is dash line
             move
        '--------------------------------------------------------------'
@@ -284,7 +284,6 @@
             move cr to d-cr
             write dash-line
             end-write
-            *> display 'finish the forth line'
       * write status according to tempfile
             open input tempfile
             open input emp.
@@ -300,7 +299,6 @@
             move cr to laji-cr
             write laji
             end-write
-            *> display 'finish another dash line'
 
       *write count
             move 'Number of Presences:' to p-line
@@ -358,7 +356,6 @@
                     END-IF
 
                     rewrite temp-info
-                    *> display 'in read-att, temp-info is 'temp-info
 
                     perform read-att-para
             end-if.
@@ -366,14 +363,11 @@
             read-emp-para.
             read emp into ws-employees
                 if emp-status not = 10
-                    *> display ws-employees
-                    *> display ws-gender 'end'
                     move ws-id-emp to id-temp
                     move '     ' to kong1
                     move ws-first-name to first-name-temp
                     move ws-last-name to last-name-temp
                     move ws-depart to depart-temp
-                    *> display 'ws-depart is ' ws-depart
                     move 0 to sus-temp
                     move 0 to late-temp
                     move 0 to overtime-temp
@@ -381,29 +375,42 @@
 
                     write temp-info
                     END-WRITE
-                    *> display temp-info
                     perform read-emp-para
             end-if.
 
             edit-mon-para.
             read mon into ws-mon-att
                if mon-status not = 10
-                   *> display ws-mon-att
+      * reset on the first day every month
+                   if current-date = 01
+                       display 'success'
+                       move ws-id-mon to id-mon1
+                       move 000 to absent1
+                       move 000 to 15-late1
+                       move 000 to overtime1
+                       move cr to mon-cr2
+                       *> display 'mon-att1 is ' mon-att1
+                   end-if
 
+                   if current-date not = 01
                    string ws-mon-att cr into mon-att1
-                   *> move cr to mon-cr2
+                   end-if
 
+                   display 'mon-att1 is ' mon-att1
                    move ws-id-mon to id-temp
-
                    read tempfile into ws-temp
                    key is id-temp
-                   *> display 'ws-temp is ' ws-temp
                    if ws-sus-temp = 0
                        add 1 to absent1
                    END-IF
                    add ws-late-temp to 15-late1
                    add ws-overtiem-tmep to overtime1
-                   display 'mon-att1 ' mon-att1
+      * claim at most 30 overtime
+                   if overtime1 >= 30
+                       move 30 to overtime1
+                   end-if
+
+                   *> display 'mon-att1 ' mon-att1
                    write mon-att1
                    end-write
                    perform edit-mon-para
@@ -412,7 +419,7 @@
             write-date-sum.
             read att into ws-date
             move att-year to ws-year
-            if att-month = 1
+            if att-month = 01
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-01 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -422,7 +429,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 2
+            if att-month = 02
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-02 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -432,7 +439,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 3
+            if att-month = 03
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-03 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -442,7 +449,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 4
+            if att-month = 04
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-04 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -452,7 +459,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-           if att-month = 5
+           if att-month = 05
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-05 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -462,7 +469,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 6
+            if att-month = 06
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-06 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -472,7 +479,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 7
+            if att-month = 07
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-07 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -482,7 +489,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 8
+            if att-month = 08
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-08 ws-space ws-day1
                    ws-comma ws-year delimited by size
@@ -492,7 +499,7 @@
                    ws-comma ws-year delimited by size
                    into ws-date-line end-if
                    end-if
-            if att-month = 9
+            if att-month = 09
                 if att-day < 10 move att-day to ws-day1
                    string ws-sum-date NAME-OF-MONTH-09 ws-space ws-day1
                    ws-comma ws-year delimited by size
