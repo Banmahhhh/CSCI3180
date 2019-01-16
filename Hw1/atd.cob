@@ -6,13 +6,16 @@
             file-control.
               select att
               assign to '/Users/banma/attendance.txt'
-              organization is line sequential.
+              organization is line sequential
+              file status is att-status.
               select emp
               assign to '/Users/banma/employees.txt'
-              organization is line sequential.
+              organization is line sequential
+              file status is emp-status.
               select mon
               assign to '/Users/banma/monthly-attendance.txt'
-              organization is line sequential.
+              organization is line sequential
+              file status is mon-status.
 
               select moncob
               assign to 'monthly-attendancecob.txt'
@@ -23,7 +26,8 @@
               select tempfile assign to 'test.txt'
               organization is indexed
               access mode is random
-              record key is id-temp.
+              record key is id-temp
+              file status is tempfile-status.
 
               select summ
               assign to 'summarycob.txt'
@@ -34,31 +38,6 @@
 
        data division.
             file section.
-            fd att.
-            01 fdate.
-               05 f-att-year pic 9999.
-               05 f-dash1 pic x.
-               05 f-att-month pic 99.
-               05 f-dash2 pic x.
-               05 f-att-day pic 99.
-            01 attendance.
-               05 id-att pic 9(4).
-               05 a-l pic a(6).
-               05 the-date pic x(11).
-               05 time-hour pic 9(2).
-               05 not-used pic x(1).
-               05 time-minute pic 9(2).
-
-            fd emp.
-            01 employees.
-                05 id-emp pic 9999.
-                05 first-name pic a(10).
-                05 last-name pic a(20).
-                05 gender pic a.
-                05 birth pic x(10).
-                05 hire-date pic x(10).
-                05 depart pic a(3).
-                05 salary pic 9(6).
 
             fd mon.
             01 mon-date pic 9999x99.
@@ -129,6 +108,7 @@
                05 ws-time-hour pic 9(2).
                05 ws-not-used pic x(1).
                05 ws-time-minute pic 9(2).
+            01 att-status pic xx.
 
       * emp
             01 ws-employees.
@@ -139,6 +119,7 @@
                05 ws-birth pic x(10).
                05 ws-hire-date pic x(10).
                05 ws-depart pic a(3).
+            01 emp-status pic xx.
 
       * mon
             01 ws-mon-date pic 9999x99.
@@ -147,6 +128,7 @@
                 05 ws-absent pic 999.
                 05 ws-15-late pic 999.
                 05 ws-overtime pic 999.
+             01 mon-status pic xx.
 
       * tempfile
             01 ws-temp.
@@ -158,6 +140,7 @@
                 05 ws-sus-temp pic 9.
                 05 ws-late-temp pic 99.
                 05 ws-overtiem-tmep pic 9.
+             01 tempfile-status pic xx.
 
       * sum
       * variables for the second line in summary
@@ -193,10 +176,6 @@
             01 pres-people pic 99999 value 0.
             01 susp-people pic 99999 value 0.
 
-
-
-
-
        procedure division.
             main-para.
       * read employee date, and write them into tempfile
@@ -223,7 +202,10 @@
             open input tempfile
             read mon into ws-mon-date
             display ws-mon-date
-            move mon-date to mon-date1
+            display '*********************************'
+            display 'mon-date is 'ws-mon-date
+            display '*********************************'
+            move ws-mon-date to mon-date1
             write mon-date1
             end-write
             perform edit-mon-para
@@ -299,8 +281,9 @@
 
             read-att-para.
             read att into ws-attendance
-                at end display 'att-end-----------------------------'
-                not at end
+                if att-status = 10 display 'att-end--------------------'
+                    end-if
+                if att-status not = 10
                     display ws-attendance
 
                     move ws-id-att to id-temp
@@ -329,12 +312,14 @@
                     display 'in read-att, temp-info is 'temp-info
 
                     perform read-att-para
-            end-read.
+            end-if.
 
             read-emp-para.
             read emp into ws-employees
-                at end display 'emp-end-----------------------'
-                not at end
+                *> at end display 'emp-end-----------------------'
+                if emp-status = 10 display 'emp-end--------------------'
+                    end-if
+                if emp-status not = 10
                     display ws-id-emp
 
                     move ws-id-emp to id-temp
@@ -350,14 +335,15 @@
                     write temp-info
                     END-WRITE
                     display temp-info
-
                     perform read-emp-para
-            end-read.
+            end-if.
 
             edit-mon-para.
             read mon into ws-mon-att
-               at end display 'mon-end'
-               not at end
+               *> at end display 'mon-end'
+               if mon-status = 10 display 'mon-end'
+                   end-if
+               if mon-status not = 10
                    display ws-mon-att
 
                    move ws-mon-att to mon-att1
@@ -375,7 +361,7 @@
                    write mon-att1
                    end-write
                    perform edit-mon-para
-            end-read.
+            end-if.
 
             write-date-sum.
             read att into ws-date
@@ -464,8 +450,9 @@
 
             write-sum-status.
             read emp into ws-employees
-            at end display 'finish writing into sum status'
-            not at end
+            if emp-status = 10 display 'finish writing into sum status'
+                end-if
+            if emp-status not = 10
                 display 'ws-id-emp is ' ws-id-emp
                 move ws-id-emp to id-temp
                 read tempfile into ws-temp
@@ -498,4 +485,4 @@
                        write sum-info
                        end-write
                        perform write-sum-status
-            end-read.
+            end-if.
