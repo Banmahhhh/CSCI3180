@@ -19,9 +19,7 @@
 
               select moncob
               assign to 'monthly-attendancecob.txt'
-              organization is indexed
-              access mode is random
-              record key is id-mon1.
+              organization is line SEQUENTIAL.
 
               select tempfile assign to 'test.txt'
               organization is indexed
@@ -31,13 +29,36 @@
 
               select summ
               assign to 'summarycob.txt'
-              organization is SEQUENTIAL.
-              *> access mode is RANDOM
-              *> record key is id-sum.
+              organization is line SEQUENTIAL.
 
 
        data division.
             file section.
+            fd att.
+            01 fdate.
+               05 fatt-year pic 9999.
+               05 fdash1 pic x.
+               05 fatt-month pic 99.
+               05 fdash2 pic x.
+               05 fatt-day pic 99.
+            01 attendance.
+               05 id-att pic 9(4).
+               05 a-l pic a(6).
+               05 the-date pic x(11).
+               05 time-hour pic 9(2).
+               05 not-used pic x(1).
+               05 time-minute pic 9(2).
+
+            fd emp.
+            01 employees.
+               05 id-emp pic 9999.
+               05 first-name pic x(10).
+               05 last-name pic x(20).
+               05 gender pic x.
+               05 birth pic x(10).
+               05 hire-date pic x(10).
+               05 depart pic x(3).
+               05 salary pic 999999.
 
             fd mon.
             01 mon-date pic 9999x99.
@@ -48,12 +69,15 @@
                 05 overtime pic 999.
 
             fd moncob.
-            01 mon-date1 pic 9999x99.
+            01 mon-date1.
+               05 date1-line pic 9999x99.
+               05 mon-cr1 pic x.
             01 mon-att1.
                 05 id-mon1 pic 9999.
                 05 absent1 pic 999.
                 05 15-late1 pic 999.
                 05 overtime1 pic 999.
+                05 mon-cr2 pic x.
 
             fd tempfile.
             01 temp-info.
@@ -67,10 +91,18 @@
                 05 overtime-temp pic 9.
 
             fd summ.
-            01 fline pic x(25).
-            01 sline pic x(23).
-            01 tline pic x(58).
-            01 dash-line pic x(62).
+            01 fline.
+               05 first-line pic x(24).
+               05 f-cr pic x.
+            01 sline.
+               05 second-line pic x(23).
+               05 s-cr pic x.
+            01 tline.
+               05 third pic x(58).
+               05 t-cr pic x.
+            01 dash-line.
+               05 dash-line1 pic x(62).
+               05 d-cr pic x.
 
             01 sum-info.
                 05 id-sum pic 9999.
@@ -79,19 +111,26 @@
                 05 last-name-sum pic x(21).
                 05 depart-sum pic x(11).
                 05 status-sum pic x(10).
-            01 laji pic x(62).
+                05 indo-cr pic x.
+            01 laji.
+               05 laji-line pic x(62).
+               05 laji-cr pic x.
             01 presences.
                 05 p-line pic x(20).
                 05 p-num pic zzzz9.
+                05 pre-cr pic x.
             01 absences.
                 05 a-line pic x(19).
                 05 a-num pic zzzz9.
+                05 abs-cr pic x.
             01 late.
                 05 l-line pic x(24).
                 05 l-num pic zzzz9.
+                05 lat-cr pic x.
             01 suspicous.
                 05 s-line pic x(29).
                 05 s-num pic zzzz9.
+                05 sus-cr pic x.
 
             working-storage section.
       * att
@@ -113,15 +152,16 @@
       * emp
             01 ws-employees.
                05 ws-id-emp pic 9999.
-               05 ws-first-name pic a(10).
-               05 ws-last-name pic a(20).
-               05 ws-gender pic a.
+               05 ws-first-name pic x(10).
+               05 ws-last-name pic x(20).
+               05 ws-gender pic x.
                05 ws-birth pic x(10).
                05 ws-hire-date pic x(10).
-               05 ws-depart pic a(3).
+               05 ws-depart pic x(3).
+               05 ws-salary pic 999999.
             01 emp-status pic xx.
 
-      * mon
+      * monx
             01 ws-mon-date pic 9999x99.
             01 ws-mon-att.
                 05 ws-id-mon pic 9999.
@@ -159,7 +199,7 @@
                 05 NAME-OF-MONTH-10 PIC X(7) VALUE 'October'.
                 05 NAME-OF-MONTH-11 PIC X(8) VALUE 'November'.
                 05 NAME-OF-MONTH-12 PIC X(8) VALUE 'December'.
-            01 ws-space pic x.
+            01 ws-space pic x value ' '.
             01 ws-day1 pic 9.
             01 ws-day2 pic 99.
             01 ws-comma pic xx value  ', '.
@@ -176,6 +216,9 @@
             01 pres-people pic 99999 value 0.
             01 susp-people pic 99999 value 0.
 
+      * add CRLF at the end of lines
+            01 cr pic x value X"0D".
+
        procedure division.
             main-para.
       * read employee date, and write them into tempfile
@@ -184,7 +227,7 @@
             perform read-emp-para.
             close tempfile
             close emp.
-            display 'employee------------------------------------------'
+            *> display 'employee------------------------------------------'
 
       * read attendance file, edit data in tempfile accordingly
       * late 4, sus 1 or 3, presen 2, absen 0
@@ -194,18 +237,16 @@
             perform read-att-para.
             close tempfile
             close att.
-            display 'attendance----------------------------------------'
+            *> display 'attendance----------------------------------------'
 
       * edit monthly attendance file
             open input mon
             open output moncob
             open input tempfile
             read mon into ws-mon-date
-            display ws-mon-date
-            display '*********************************'
-            display 'mon-date is 'ws-mon-date
-            display '*********************************'
-            move ws-mon-date to mon-date1
+            move ws-mon-date to date1-line
+            move cr to mon-cr1
+            display 'mon-date1 ' mon-date1
             write mon-date1
             end-write
             perform edit-mon-para
@@ -213,33 +254,37 @@
             close moncob
             close mon.
 
-            display 'mon-----------------------------------------------'
+
       * generate summarycob.txt
             open output summ
       * write the first line     Daily Attendance Summary
-            move 'Daily Attendance Summary' to fline.
+            move 'Daily Attendance Summary' to first-line.
+            display 'fline ' fline
+            move cr to f-cr
             write fline
             end-write
-            display 'finish the first line'
+            *> display 'finish the first line'
       * write the second line        Date: January 4, 2019
             open input att
             perform write-date-sum
             close att
-            display 'finish the second line'
+            *> display 'finish the second line'
       * write the third line
             move
         'Staff-ID Name                            Department Status' to
-            tline
+            third
+            move cr to t-cr
             write tline
             end-write
-            display 'finish the third line'
+            *> display 'finish the third line'
       * write the forth line, which is dash line
             move
        '--------------------------------------------------------------'
-            to dash-line
+            to dash-line1
+            move cr to d-cr
             write dash-line
             end-write
-            display 'finish the forth line'
+            *> display 'finish the forth line'
       * write status according to tempfile
             open input tempfile
             open input emp.
@@ -250,41 +295,45 @@
       * write another dash line, laji is another dash line
             move
        '--------------------------------------------------------------'
-            to laji
-            display 'success'
+            to laji-line
+            *> display 'success'
+            move cr to laji-cr
             write laji
             end-write
-            display 'finish another dash line'
+            *> display 'finish another dash line'
 
       *write count
             move 'Number of Presences:' to p-line
             move pres-people to p-num
+            move cr to pre-cr
             write presences end-write
 
             move 'Number of Absences:' to a-line
             move abse-people to a-num
+            move cr to abs-cr
             write absences end-write
 
             move 'Number of Late Arrivals:' to l-line
             move late-people to l-num
+            move cr to lat-cr
             write late end-write
 
             move 'Number of Suspicious Records:' to s-line
             move susp-people to s-num
+            move cr to sus-cr
             write suspicous end-write
 
             close summ.
 
       * And then, the code is finished
 
+
        stop run.
 
             read-att-para.
             read att into ws-attendance
-                if att-status = 10 display 'att-end--------------------'
-                    end-if
                 if att-status not = 10
-                    display ws-attendance
+                    *> display ws-attendance
 
                     move ws-id-att to id-temp
                     read tempfile into ws-temp
@@ -296,37 +345,35 @@
 
                     if ws-a-l = 'ARRIVE'
                         if ws-time-hour is not < 10
-                            display 'arrive'
+                            *> display 'arrive'
                             compute x=4 * (ws-time-hour - 10) +
                                    (ws-time-minute / 15)
                             add x to late-temp
                          end-if
                     end-if
                     if ws-a-l = 'LEAVE'
-                        display 'leave'
+                        *> display 'leave'
                         compute x=ws-time-hour - 17
                         add x to overtime-temp
                     END-IF
 
                     rewrite temp-info
-                    display 'in read-att, temp-info is 'temp-info
+                    *> display 'in read-att, temp-info is 'temp-info
 
                     perform read-att-para
             end-if.
 
             read-emp-para.
             read emp into ws-employees
-                *> at end display 'emp-end-----------------------'
-                if emp-status = 10 display 'emp-end--------------------'
-                    end-if
                 if emp-status not = 10
-                    display ws-id-emp
-
+                    *> display ws-employees
+                    *> display ws-gender 'end'
                     move ws-id-emp to id-temp
                     move '     ' to kong1
                     move ws-first-name to first-name-temp
                     move ws-last-name to last-name-temp
                     move ws-depart to depart-temp
+                    *> display 'ws-depart is ' ws-depart
                     move 0 to sus-temp
                     move 0 to late-temp
                     move 0 to overtime-temp
@@ -334,30 +381,29 @@
 
                     write temp-info
                     END-WRITE
-                    display temp-info
+                    *> display temp-info
                     perform read-emp-para
             end-if.
 
             edit-mon-para.
             read mon into ws-mon-att
-               *> at end display 'mon-end'
-               if mon-status = 10 display 'mon-end'
-                   end-if
                if mon-status not = 10
-                   display ws-mon-att
+                   *> display ws-mon-att
 
-                   move ws-mon-att to mon-att1
+                   string ws-mon-att cr into mon-att1
+                   *> move cr to mon-cr2
+
                    move ws-id-mon to id-temp
 
                    read tempfile into ws-temp
                    key is id-temp
-                   display 'ws-temp is ' ws-temp
+                   *> display 'ws-temp is ' ws-temp
                    if ws-sus-temp = 0
                        add 1 to absent1
                    END-IF
                    add ws-late-temp to 15-late1
                    add ws-overtiem-tmep to overtime1
-                   display 'mon-att1 is ' mon-att1
+                   display 'mon-att1 ' mon-att1
                    write mon-att1
                    end-write
                    perform edit-mon-para
@@ -365,111 +411,156 @@
 
             write-date-sum.
             read att into ws-date
-            display 'ws-date is ' ws-date
             move att-year to ws-year
-            display 'ws-year is ' ws-year
-            display 'att-month is ' att-month
-            if att-month = 01
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-01
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+            if att-month = 1
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-01 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-01 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 2
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-02
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-02 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-02 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 3
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-03
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-03 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-03 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 4
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-04
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
-            if att-month = 5
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-05
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-04 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-04 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
+           if att-month = 5
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-05 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-05 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 6
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-06
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-06 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-06 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 7
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-07
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-07 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-07 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 8
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-08
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-08 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-08 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 9
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-09
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-09 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-09 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 10
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-10
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-10 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-10 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 11
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-11
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-11 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-11 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
             if att-month = 12
-                if att-day < 10 move att-day to ws-day1 end-if
-                if att-day > 9 move att-day to ws-day2 end-if
-            string ws-sum-date NAME-OF-MONTH-12
-            ws-space ws-day1 ws-comma ws-year delimited by size
-            into ws-date-line end-if
+                if att-day < 10 move att-day to ws-day1
+                   string ws-sum-date NAME-OF-MONTH-12 ws-space ws-day1
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                if att-day > 9 move att-day to ws-day2
+                   string ws-sum-date NAME-OF-MONTH-12 ws-space ws-day2
+                   ws-comma ws-year delimited by size
+                   into ws-date-line end-if
+                   end-if
 
-            display 'ws-date-line is ' ws-date-line
-            move ws-date-line to sline
-            display 'sline is ' sline
+            move ws-date-line to second-line
+            display 'sline is ' second-line
+            move cr to s-cr
             write sline
             end-write.
 
             write-sum-status.
             read emp into ws-employees
-            if emp-status = 10 display 'finish writing into sum status'
-                end-if
             if emp-status not = 10
-                display 'ws-id-emp is ' ws-id-emp
+                *> display 'ws-id-emp is ' ws-id-emp
                 move ws-id-emp to id-temp
                 read tempfile into ws-temp
                 key is id-temp
-                       display 'ws-temp is 'ws-temp
+                       *> display 'ws-temp is 'ws-temp
                        move ws-id-temp to id-sum
                        move '     ' to fspace
                        move ws-first-name-temp to first-name-sum
                        move ws-last-name-temp to last-name-sum
                        move ws-depart-temp to depart-sum
+                       move cr to indo-cr
+                       *> display 'depart is ' ws-depart-temp
                        if ws-sus-temp = 0
                            add 1 to abse-people
-                           display 'abse-people ' abse-people
+                           *> display 'abse-people ' abse-people
                            move 'ABSENCE' to status-sum end-if
                        if ws-sus-temp = 1
                            add 1 to susp-people
-                           display 'susp-people' susp-people
+                           *> display 'susp-people' susp-people
                            move 'SUSPICIOUS' to status-sum end-if
                        if ws-sus-temp = 2
                            if ws-late-temp > 0
@@ -478,7 +569,7 @@
                                move 'LATE' to status-sum end-if
                            if ws-late-temp = 0
                                add 1 to pres-people
-                               display 'pres-people ' pres-people
+                               *> display 'pres-people ' pres-people
                                move 'PRESENCE' to status-sum end-if
                        end-if
                        display 'sum-info ' sum-info
