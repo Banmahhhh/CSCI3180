@@ -86,6 +86,8 @@
                 05 first-name-temp pic x(10).
                 05 last-name-temp pic x(20).
                 05 depart-temp pic x(11).
+                05 sus-arrive pic 9.
+                05 sus-leave pic 9.
                 05 sus-temp pic 9.
                 05 late-temp pic 99.
                 05 overtime-temp pic 9.
@@ -177,6 +179,8 @@
                 05 ws-first-name-temp pic x(10).
                 05 ws-last-name-temp pic x(20).
                 05 ws-depart-temp pic x(11).
+                05 ws-arrive-temp pic 9.
+                05 ws-leave-temp pic 9.
                 05 ws-sus-temp pic 9.
                 05 ws-late-temp pic 99.
                 05 ws-overtiem-tmep pic 9.
@@ -237,7 +241,7 @@
             open i-o tempfile
             read att into ws-date.
             move att-day to current-date.
-            display 'current date is ' current-date
+            *> display 'current date is ' current-date
             perform read-att-para.
             close tempfile
             close att.
@@ -331,7 +335,7 @@
             read-att-para.
             read att into ws-attendance
                 if att-status not = 10
-                    *> display ws-attendance
+                    display ws-attendance
 
                     move ws-id-att to id-temp
                     read tempfile into ws-temp
@@ -339,20 +343,27 @@
                     move ws-sus-temp to sus-temp
                     move ws-late-temp to late-temp
                     move ws-overtime to overtime-temp
-                    add 1 to sus-temp
 
                     if ws-a-l = 'ARRIVE'
-                        if ws-time-hour is not < 10
-                            *> display 'arrive'
-                            compute x=4 * (ws-time-hour - 10) +
-                                   (ws-time-minute / 15)
-                            add x to late-temp
+                        if ws-arrive-temp not = 1
+                            display 'arrive'
+                            move 1 to sus-arrive
+                            add 1 to sus-temp
+                            if ws-time-hour is not < 10
+
+                                compute x=4 * (ws-time-hour - 10) +
+                                       (ws-time-minute / 15)
+                                add x to late-temp
+                             end-if
                          end-if
                     end-if
                     if ws-a-l = 'LEAVE'
-                        *> display 'leave'
+                        if ws-leave-temp not = 1
+                            move 1 to sus-leave
+                            add 1 to sus-temp
                         compute x=ws-time-hour - 17
                         add x to overtime-temp
+                        end-if
                     END-IF
 
                     rewrite temp-info
@@ -383,7 +394,7 @@
                if mon-status not = 10
       * reset on the first day every month
                    if current-date = 01
-                       display 'success'
+                       *> display 'success'
                        move ws-id-mon to id-mon1
                        move 000 to absent1
                        move 000 to 15-late1
@@ -396,7 +407,7 @@
                    string ws-mon-att cr into mon-att1
                    end-if
 
-                   display 'mon-att1 is ' mon-att1
+                   *> display 'mon-att1 is ' mon-att1
                    move ws-id-mon to id-temp
                    read tempfile into ws-temp
                    key is id-temp
@@ -541,7 +552,7 @@
                    end-if
 
             move ws-date-line to second-line
-            display 'sline is ' second-line
+            *> display 'sline is ' second-line
             move cr to s-cr
             write sline
             end-write.
