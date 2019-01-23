@@ -2,95 +2,95 @@
           implicit none
 
           ! employee variables
-          integer :: emp_ios
-          integer :: emp_id !4
-          character(len=10) :: emp_first_name
-          character(len=20) :: emp_last_name
-          character(len=21) :: emp_notimportant
-          character(len=3) :: emp_depart
-          integer :: emp_salary !6
+          integer :: e_ios ! emp_ios
+          integer :: e_id !4 e_id
+          character(len=10) :: e_f_n ! e_f_n
+          character(len=20) :: e_l_n
+          character(len=21) :: e_n_u !emp_not_uesd
+          character(len=3) :: e_dep !emp_department
+          integer :: e_sal !6
 
           ! attendance variables
-          integer :: att_ios
-          integer :: att_id ! 4
-          character(len=6) :: att_a_l
-          character(len=11) :: att_notused
-          integer :: att_hour ! 2
-          character(len=1) :: att_colon
-          integer :: att_min ! 2
+          integer :: a_ios
+          integer :: a_id ! 4
+          character(len=6) :: a_a_l ! attendance_arrive_leave
+          character(len=11) :: a_n_u !att_not_used
+          integer :: a_h ! 2 att_hour
+          character(len=1) :: a_cl !att_colon
+          integer :: a_m ! 2 att_minute
 
           ! monthly-attendance variables
-          integer :: mon_ios
-          character(len=7) :: mon_date
-          integer :: mon_id ! 4
-          integer :: mon_absence ! 3
-          integer :: mon_15_late ! 3
-          integer :: mon_overtime !3
+          integer :: m_ios
+          character(len=7) :: m_d ! mon_date
+          integer :: m_id ! 4 mon_id
+          integer :: m_ab ! 3 mon_absence
+          integer :: m_15_l ! 3 mon_15_late
+          integer :: m_ot !3 mon_overtime
 
           ! summaryfor variables
-          integer :: sum_ios
-          integer :: presences ! 4
-          integer :: absences ! 4
+          integer :: s_ios !sum_ios
+          integer :: pr ! 4 presence
+          integer :: ab ! 4 absence
           integer :: late ! 4
-          integer :: suspicious ! 4
+          integer :: su ! 4 suspicious
           
 
           ! wasting memory array
           ! absence: 0, 0, 0
-          ! suspicious: 1, *, *
+          ! su: 1, *, *
           ! presence: 2, 0, 0
           ! late: 2, >0, *
           ! overtime: 2, *, >0
           integer, dimension(9999, 5) :: record
 
           ! current date
-          integer :: cur_year ! 4
-          integer :: cur_month ! 2
-          integer :: cur_date ! 2
-          character(len=1) :: cur_dash ! - in the first line of attendance
+          integer :: c_y ! 4 current_year
+          integer :: c_m! 2 current_month
+          integer :: c_d ! 2 current_date
+          character(len=1) :: c_dash ! - in the first line of attendance
 
           ! count people of each status
 *23456789*************************************************************       
-* read attendance.txt, record status of suspicious/late/overtime
+* read attendance.txt, record status of su/late/overtime
 
-          presences=0
-          absences=0
+          pr=0
+          ab=0
           late=0
-          suspicious=0
+          su=0
 
           open(1, file = 'attendance.txt', status='old')
-          read(1, "(I4,A1,I2,A1,I2)") cur_year, cur_dash, 
-     &    cur_month, cur_dash, cur_date
-!          write(*, *) cur_year, cur_month, cur_date 
+          read(1, "(I4,A1,I2,A1,I2)") c_y, c_dash, 
+     &    c_m, c_dash, c_d
+!          write(*, *) c_y, c_m, c_d 
 
 2         continue 
-          read(1, "(I4,A6,A11,I2,A1,I2)", IOSTAT=att_ios) att_id,
-     &    att_a_l, att_notused, att_hour, att_colon, att_min
-          if (att_ios < 0) then
+          read(1, "(I4,A6,A11,I2,A1,I2)", IOSTAT=a_ios) a_id,
+     &    a_a_l, a_n_u, a_h, a_cl, a_m
+          if (a_ios < 0) then
                print *, 'end of att'
           end if
-          if(att_ios == 0) then
-               write(*,*) "att not end", att_id
-               if(att_a_l == 'ARRIVE') then
+          if(a_ios == 0) then
+               write(*,*) "att not end", a_id
+               if(a_a_l == 'ARRIVE') then
                ! only deal with the first arrive or leave record
-               if(record(att_id, 4) == 0) then
+               if(record(a_id, 4) == 0) then
                     write(*,*) "arrive"
-                    record(att_id, 4) = 1 ! read an arrive record
-                    record(att_id, 1) = record(att_id, 1)+1
-                    if(att_hour > 9) then
-                         record(att_id, 2)=4*(att_hour-10)+att_min/15
-                    write(*,*) record(att_id, 1),record(att_id, 2)
+                    record(a_id, 4) = 1 ! read an arrive record
+                    record(a_id, 1) = record(a_id, 1)+1
+                    if(a_h > 9) then
+                         record(a_id, 2)=4*(a_h-10)+a_m/15
+                    write(*,*) record(a_id, 1),record(a_id, 2)
                     end if
                end if
                end if
-               if(att_a_l == 'LEAVE') then
-               if(record(att_id, 5) == 0) then
+               if(a_a_l == 'LEAVE') then
+               if(record(a_id, 5) == 0) then
                     write(*,*) "leave"
-                    record(att_id, 5) = 1 ! read a leave record
-                    record(att_id, 1) = record(att_id, 1)+1
-                    if(att_hour > 16) then
-                         record(att_id, 3)=att_hour-17
-                    write(*,*) record(att_id, 1),record(att_id, 3)
+                    record(a_id, 5) = 1 ! read a leave record
+                    record(a_id, 1) = record(a_id, 1)+1
+                    if(a_h > 16) then
+                         record(a_id, 3)=a_h-17
+                    write(*,*) record(a_id, 1),record(a_id, 3)
                     end if
                end if
                end if
@@ -103,34 +103,34 @@
           open(2, file='monthly-attendance.txt', status='old')         
           open(3, file='monthly-attendancefor.txt')  
 
-          read(2, "(A7)", IOSTAT=mon_ios) mon_date
-          write(3, "(A7)") mon_date
+          read(2, "(A7)", IOSTAT=m_ios) m_d
+          write(3, "(A7)") m_d
 
 3         continue
-          read(2, "(I4,I3,I3,I3)", IOSTAT=mon_ios)
-     &         mon_id, mon_absence, mon_15_late, mon_overtime
-          if(mon_ios < 0) then
+          read(2, "(I4,I3,I3,I3)", IOSTAT=m_ios)
+     &         m_id, m_ab, m_15_l, m_ot
+          if(m_ios < 0) then
                write(*,*) "mon end"
           end if
-          if(mon_ios == 0) then
-          write(*,*) mon_id, mon_absence, mon_15_late, mon_overtime
+          if(m_ios == 0) then
+          write(*,*) m_id, m_ab, m_15_l, m_ot
           ! update on the first of a month
-               if(cur_date == 1) then
-               mon_absence = 0
-               mon_15_late = 0
-               mon_overtime = 0
+               if(c_d == 1) then
+               m_ab = 0
+               m_15_l = 0
+               m_ot = 0
                end if
 
-               if(record(mon_id, 1) == 0) then
-                    mon_absence = mon_absence+1
+               if(record(m_id, 1) == 0) then
+                    m_ab = m_ab+1
                end if
-               mon_15_late=record(mon_id, 2)+mon_15_late
-               mon_overtime=mon_overtime+record(mon_id, 3)
-               if(mon_overtime > 30) then
-                    mon_overtime = 30
+               m_15_l=record(m_id, 2)+m_15_l
+               m_ot=m_ot+record(m_id, 3)
+               if(m_ot > 30) then
+                    m_ot = 30
                end if
-               write(3,"(I4,I0.3,I0.3,I0.3)") mon_id, mon_absence, 
-     &         mon_15_late, mon_overtime
+               write(3,"(I4,I0.3,I0.3,I0.3)") m_id, m_ab, 
+     &         m_15_l, m_ot
                goto 3 
           end if   
           close(2)
@@ -141,165 +141,165 @@
           open(4, file='employees.txt')
           open(7, file='summaryfor.txt')
           write(7, "(A24)") "Daily Attendance Summary"
-           ! write the laji date
-          if(cur_month == 1) then
-               if(cur_date < 10) then
-               write(7, "(A14,I1,A2,I4)") "Date: January ", cur_date,
-     &         ", ", cur_year 
+          ! write the laji date
+          if(c_m == 1) then
+               if(c_d < 10) then
+               write(7, "(A14,I1,A2,I4)") "Date: January ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A14,I2,A2,I4)") "Date: January ", cur_date,
-     &         ", ", cur_year 
-               end if
-          end if
-          if(cur_month == 2) then
-               if(cur_date < 10) then
-               write(7, "(A15,I1,A2,I4)") "Date: February ", cur_date,
-     &         ", ", cur_year 
-               end if
-               if(cur_date > 9) then
-               write(7, "(A15,I2,A2,I4)") "Date: February ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A14,I2,A2,I4)") "Date: January ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month == 3) then
-               if(cur_date < 10) then
-               write(7, "(A12,I1,A2,I4)") "Date: March ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 2) then
+               if(c_d < 10) then
+               write(7, "(A15,I1,A2,I4)") "Date: February ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A14,I2,A2,I4)") "Date: March ", cur_date,
-     &         ", ", cur_year 
-               end if
-          end if
-          if(cur_month == 4) then
-               if(cur_date < 10) then
-               write(7, "(A12,I1,A2,I4)") "Date: April ", cur_date,
-     &         ", ", cur_year 
-               end if
-               if(cur_date > 9) then
-               write(7, "(A12,I2,A2,I4)") "Date: April ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A15,I2,A2,I4)") "Date: February ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month == 5) then
-               if(cur_date < 10) then
-               write(7, "(A10,I1,A2,I4)") "Date: May ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 3) then
+               if(c_d < 10) then
+               write(7, "(A12,I1,A2,I4)") "Date: March ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A10,I2,A2,I4)") "Date: May ", cur_date,
-     &         ", ", cur_year 
-               end if
-          end if
-          if(cur_month == 6) then
-               if(cur_date < 10) then
-               write(7, "(A11,I1,A2,I4)") "Date: June ", cur_date,
-     &         ", ", cur_year 
-               end if
-               if(cur_date > 9) then
-               write(7, "(A11,I2,A2,I4)") "Date: June ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A14,I2,A2,I4)") "Date: March ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month == 7) then
-               if(cur_date < 10) then
-               write(7, "(A11,I1,A2,I4)") "Date: July ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 4) then
+               if(c_d < 10) then
+               write(7, "(A12,I1,A2,I4)") "Date: April ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A11,I2,A2,I4)") "Date: July ", cur_date,
-     &         ", ", cur_year 
-               end if
-          end if
-          if(cur_month == 8) then
-               if(cur_date < 10) then
-               write(7, "(A13,I1,A2,I4)") "Date: August ", cur_date,
-     &         ", ", cur_year 
-               end if
-               if(cur_date > 9) then
-               write(7, "(A13,I2,A2,I4)") "Date: May ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A12,I2,A2,I4)") "Date: April ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month == 9) then
-               if(cur_date < 10) then
-               write(7, "(A16,I1,A2,I4)") "Date: September ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 5) then
+               if(c_d < 10) then
+               write(7, "(A10,I1,A2,I4)") "Date: May ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A16,I2,A2,I4)") "Date: September ", cur_date,
-     &         ", ", cur_year 
-               end if
-          end if
-          if(cur_month == 10) then
-               if(cur_date < 10) then
-               write(7, "(A14,I1,A2,I4)") "Date: October ", cur_date,
-     &         ", ", cur_year 
-               end if
-               if(cur_date > 9) then
-               write(7, "(A14,I2,A2,I4)") "Date: October ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A10,I2,A2,I4)") "Date: May ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month ==11) then
-               if(cur_date < 10) then
-               write(7, "(A15,I1,A2,I4)") "Date: November ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 6) then
+               if(c_d < 10) then
+               write(7, "(A11,I1,A2,I4)") "Date: June ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A15,I2,A2,I4)") "Date: November ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A11,I2,A2,I4)") "Date: June ", c_d,
+     &         ", ", c_y 
                end if
           end if
-          if(cur_month == 12) then
-               if(cur_date < 10) then
-               write(7, "(A15,I1,A2,I4)") "Date: December ", cur_date,
-     &         ", ", cur_year 
+          if(c_m == 7) then
+               if(c_d < 10) then
+               write(7, "(A11,I1,A2,I4)") "Date: July ", c_d,
+     &         ", ", c_y 
                end if
-               if(cur_date > 9) then
-               write(7, "(A15,I2,A2,I4)") "Date: December ", cur_date,
-     &         ", ", cur_year 
+               if(c_d > 9) then
+               write(7, "(A11,I2,A2,I4)") "Date: July ", c_d,
+     &         ", ", c_y 
+               end if
+          end if
+          if(c_m == 8) then
+               if(c_d < 10) then
+               write(7, "(A13,I1,A2,I4)") "Date: August ", c_d,
+     &         ", ", c_y 
+               end if
+               if(c_d > 9) then
+               write(7, "(A13,I2,A2,I4)") "Date: May ", c_d,
+     &         ", ", c_y 
+               end if
+          end if
+          if(c_m == 9) then
+               if(c_d < 10) then
+               write(7, "(A16,I1,A2,I4)") "Date: September ", c_d,
+     &         ", ", c_y 
+               end if
+               if(c_d > 9) then
+               write(7, "(A16,I2,A2,I4)") "Date: September ", c_d,
+     &         ", ", c_y 
+               end if
+          end if
+          if(c_m == 10) then
+               if(c_d < 10) then
+               write(7, "(A14,I1,A2,I4)") "Date: October ", c_d,
+     &         ", ", c_y 
+               end if
+               if(c_d > 9) then
+               write(7, "(A14,I2,A2,I4)") "Date: October ", c_d,
+     &         ", ", c_y 
+               end if
+          end if
+          if(c_m ==11) then
+               if(c_d < 10) then
+               write(7, "(A15,I1,A2,I4)") "Date: November ", c_d,
+     &         ", ", c_y 
+               end if
+               if(c_d > 9) then
+               write(7, "(A15,I2,A2,I4)") "Date: November ", c_d,
+     &         ", ", c_y 
+               end if
+          end if
+          if(c_m == 12) then
+               if(c_d < 10) then
+               write(7, "(A15,I1,A2,I4)") "Date: December ", c_d,
+     &         ", ", c_y 
+               end if
+               if(c_d > 9) then
+               write(7, "(A15,I2,A2,I4)") "Date: December ", c_d,
+     &         ", ", c_y 
                end if
           end if
           write(7,"(A58)") 
      &    "Staff-ID Name                            Department Status"
           write(7,"(A62)") 
      &"--------------------------------------------------------------"
-    
+
           ! write the attendance status
 4         continue
-          read(4,"(I4,A10,A20,A21,A3,I6)", IOSTAT = emp_ios) emp_id, 
-     &    emp_first_name, emp_last_name, emp_notimportant, emp_depart, 
-     &    emp_salary 
-          write(*,*) "emp_id is ", emp_id
-          if(emp_ios < 0) then
+          read(4,"(I4,A10,A20,A21,A3,I6)", IOSTAT = e_ios) e_id, 
+     &    e_f_n, e_l_n, e_n_u, e_dep, 
+     &    e_sal 
+          write(*,*) "e_id is ", e_id
+          if(e_ios < 0) then
                write(*,*) "emp end"
           end if       
-          if(emp_ios == 0) then
-               write(*,"(A3)") emp_depart
-               if(record(emp_id,1) == 0) then 
+          if(e_ios == 0) then
+               write(*,"(A3)") e_dep
+               if(record(e_id,1) == 0) then 
                     write(7,"(I4,A5,A11,A21,A3,A8,A7)") 
-     &              emp_id, "     ", emp_first_name, emp_last_name, 
-     &              emp_depart, "        ", "ABSENCE"
-                    absences = absences+1
+     &              e_id, "     ", e_f_n, e_l_n, 
+     &              e_dep, "        ", "ABSENCE"
+                    ab = ab+1
                end if
-               if(record(emp_id,1) == 1) then 
+               if(record(e_id,1) == 1) then 
                     write(7,"(I4,A5,A11,A21,A3,A8,A10)") 
-     &              emp_id, "     ", emp_first_name, emp_last_name, 
-     &              emp_depart, "        ", "SUSPICIOUS"
-                    suspicious = suspicious+1
+     &              e_id, "     ", e_f_n, e_l_n, 
+     &              e_dep, "        ", "su"
+                    su = su+1
                end if
-               if(record(emp_id,1) == 2) then 
-                    if(record(emp_id, 2) == 0) then
+               if(record(e_id,1) == 2) then 
+                    if(record(e_id, 2) == 0) then
                     write(7,"(I4,A5,A11,A21,A3,A8,A8)") 
-     &              emp_id, "     ", emp_first_name, emp_last_name, 
-     &              emp_depart, "        ", "PRESENCE"
-                    presences = presences+1
+     &              e_id, "     ", e_f_n, e_l_n, 
+     &              e_dep, "        ", "PRESENCE"
+                    pr = pr+1
                     end if
-                    if(record(emp_id, 2) /= 0) then
-                    write(7,"(I4,A5,A11,A21,A3,A8,A4)") emp_id,
-     &               "     ", emp_first_name, emp_last_name, emp_depart,
+                    if(record(e_id, 2) /= 0) then
+                    write(7,"(I4,A5,A11,A21,A3,A8,A4)") e_id,
+     &               "     ", e_f_n, e_l_n, e_dep,
      &               "        ", "LATE"
                     late = late+1
                     end if
@@ -308,11 +308,11 @@
           end if
           write(7,"(A62)") 
      &"--------------------------------------------------------------"
-          write(7, "(A21,I4)") "Number of Presences: ", presences
-          write(7, "(A20,I4)") "Number of Absences: ", absences
+          write(7, "(A21,I4)") "Number of pr: ", pr
+          write(7, "(A20,I4)") "Number of ab: ", ab
           write(7, "(A25,I4)") "Number of Late Arrivals: ", late
-          write(7, "(A30,I4)") "Number of Suspicious Records: ", 
-     &     suspicious
+          write(7, "(A30,I4)") "Number of su Records: ", 
+     &     su
 
           close(4)
           close(7)
